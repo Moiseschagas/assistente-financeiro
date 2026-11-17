@@ -48,7 +48,7 @@ td,th{padding:8px 6px;border-bottom:1px solid var(--bd);text-align:left;white-sp
 </div>
 <script>
 const B=[['mp','Mercado Pago','#009EE3'],['it','Itaú','#EC7000'],['br','Bradesco','#CC092F'],['nu','Nubank','#820AD1'],['sa','Santander','#EC0000']];
-let S={init:{},mov:[],bills:[],cards:[],buys:[],paid:{}},tab='r';
+let S={init:{},mov:[],bills:[],cards:[],buys:[],paid:{},imp:{}},tab='r';
 try{const r=localStorage.getItem('af1');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem('af1',JSON.stringify(S))}catch(e){}};
 const money=n=>(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -121,6 +121,35 @@ ${S.cards.length?`<h2>Nova compra no cartão</h2><div class="card"><form onsubmi
 <h2>Calendário de vencimentos</h2><div class="card tw">${cal.length?`<table>${cal.map(c=>`<tr><td>${br(c[0])}</td><td>${c[1]}</td><td>${money(c[2])}</td><td>${chip(c[3])}</td></tr>`).join('')}</table>`:'<div class="empty">Nada a vencer.</div>'}</div>`}
 function leftOf(p,c){const d=dt(p.d),m=d.getFullYear()*12+d.getMonth()+(d.getDate()>c.fe?1:0);let r=0;for(let k=0;k<p.n;k++){const mm=m+k;if(!S.paid[c.id+'|'+Math.floor(mm/12)+'-'+String(mm%12+1).padStart(2,'0')])r++}return r}
 
+function vD(){const P=window._p||'3',fb=window._db||'',n=new Date(),cut=P==='all'?'0000-00-00':iso(new Date(n.getFullYear(),n.getMonth()-(+P-1),1));
+const L=S.mov.filter(m=>m.d>=cut&&(!fb||m.b===fb));let e=0,s=0;const M={},K={},O=[];
+L.forEach(m=>{const y=m.d.slice(0,7),k=K[m.b]||(K[m.b]={e:0,s:0}),q=M[y]||(M[y]={e:0,s:0});if(m.t==='e'){e+=m.v;q.e+=m.v;k.e+=m.v}else{s+=m.v;q.s+=m.v;k.s+=m.v;O.push(m)}});
+const ks=Object.keys(M).sort().slice(-12),mx=Math.max(1,...ks.flatMap(k=>[M[k].e,M[k].s])),W=600,w=W/Math.max(ks.length,1);
+const ch=ks.length?`<svg viewBox="0 0 ${W} 185" width="100%" role="img" aria-label="Entradas e saídas por mês">${ks.map((k,i)=>{const cx=i*w+w/2,bw=Math.min(26,w/2-4),h1=M[k].e/mx*130,h2=M[k].s/mx*130;return `<rect x="${cx-bw-1}" y="${150-h1}" width="${bw}" height="${h1}" rx="3" fill="var(--ok)"/><rect x="${cx+1}" y="${150-h2}" width="${bw}" height="${h2}" rx="3" fill="var(--er)"/><text x="${cx}" y="171" text-anchor="middle" font-size="12" fill="var(--mu)">${k.slice(5)}/${k.slice(2,4)}</text>`}).join('')}</svg>`:'<div class="empty">Sem movimentações no período.</div>';
+const top=O.sort((a,b)=>b.v-a.v).slice(0,5),bk=B.filter(b=>K[b[0]]);
+return `<div class="row"><label style="width:180px">Período<select onchange="window._p=this.value;render()">${[['1','Mês atual'],['3','Últimos 3 meses'],['6','Últimos 6 meses'],['12','Últimos 12 meses'],['all','Tudo']].map(o=>`<option value="${o[0]}" ${o[0]===P?'selected':''}>${o[1]}</option>`).join('')}</select></label><label style="width:200px">Banco<select onchange="window._db=this.value;render()"><option value="">Todos</option>${B.map(b=>`<option value="${b[0]}" ${fb===b[0]?'selected':''}>${b[1]}</option>`).join('')}</select></label></div>
+<div class="grid" style="margin-top:12px"><div class="card"><div class="sm">Entradas</div><div class="big pos">${money(e)}</div></div><div class="card"><div class="sm">Saídas</div><div class="big neg">${money(s)}</div></div><div class="card"><div class="sm">Resultado</div><div class="big ${e-s<0?'neg':'pos'}">${money(e-s)}</div><div class="sm">${e?`Saídas equivalem a ${Math.round(s/e*100)}% das entradas`:'Sem entradas no período'}</div></div></div>
+<h2>Evolução mensal</h2><div class="card">${ch}<div class="sm"><span class="pos">■ Entradas</span><span class="neg">■ Saídas</span></div></div>
+<h2>Por banco</h2><div class="card tw">${bk.length?`<table><tr><th>Banco</th><th>Entradas</th><th>Saídas</th><th>Resultado</th></tr>${bk.map(b=>{const k=K[b[0]];return `<tr><td><span class="bn"><i style="background:${b[2]}"></i>${b[1]}</span></td><td class="pos">${money(k.e)}</td><td class="neg">${money(k.s)}</td><td class="${k.e-k.s<0?'neg':'pos'}">${money(k.e-k.s)}</td></tr>`}).join('')}</table>`:'<div class="empty">Sem dados no período.</div>'}</div>
+<h2>Maiores saídas</h2><div class="card tw">${top.length?`<table>${top.map(m=>`<tr><td>${br(m.d)}</td><td>${bn(m.b)}</td><td>${esc(m.n)}</td><td class="neg">${money(m.v)}</td></tr>`).join('')}</table>`:'<div class="empty">Sem saídas no período.</div>'}</div>`}
+
+function vI(){const msg=window._msg||'';
+const bc=B.map(b=>{const x=bal(b[0]),n=S.mov.filter(m=>m.b===b[0]).length,im=S.imp[b[0]];
+return `<div class="card"><div class="bn"><i style="background:${b[2]}"></i>${b[1]}</div><div class="big ${x.sd<0?'neg':''}">${money(x.sd)}</div><div class="sm"><span>${n} movimentações</span><span>${im?'Último extrato: '+im:'Nenhum extrato importado'}</span></div><div class="row" style="margin-top:8px"><button class="btn g" onclick="window._f='${b[0]}';tab='m';render()">Ver dados</button></div></div>`}).join('');
+return `<h2 style="margin-top:0">Dados por banco</h2><div class="grid">${bc}</div>
+<h2>Importar extrato</h2><div class="card"><div class="grid"><label>Banco<select id="ib">${bopts()}</select></label><label>Arquivo (OFX ou CSV)<input id="if" type="file" accept=".ofx,.csv,.txt"></label></div><div class="row" style="margin-top:10px"><button class="btn" onclick="impFile()">Importar</button></div>${msg?`<div class="al ok" style="margin-top:10px">${msg}</div>`:''}<div class="sm" style="margin-top:8px">Baixe o extrato da conta no app ou site do banco. Movimentações repetidas são ignoradas. Não importe o extrato do cartão aqui: use a aba Cartões, para não duplicar.</div></div>`}
+function parseOFX(t){const o=[];(t.match(/<STMTTRN>[\s\S]*?(?=<\/STMTTRN>|<STMTTRN>|<\/BANKTRANLIST>|$)/gi)||[]).forEach(x=>{const gt=k=>{const m=x.match(new RegExp('<'+k+'>([^<\\r\\n]*)','i'));return m?m[1].trim():''};const a=num(gt('TRNAMT')),d=gt('DTPOSTED');if(!a||d.length<8)return;o.push({d:d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8),v:Math.abs(a),t:a<0?'s':'e',n:gt('MEMO')||gt('NAME')||'Movimentação',id:gt('FITID')})});return o}
+function parseCSV(t){const R=t.split(/\r?\n/).filter(l=>l.trim());if(R.length<2)return[];const hi=Math.max(0,R.findIndex(l=>/data/i.test(l))),sp=R[hi].includes(';')?';':',';
+const sc=l=>{const o=[];let c='',q=0;for(const ch of l){if(ch==='"')q=!q;else if(ch===sp&&!q){o.push(c);c=''}else c+=ch}o.push(c);return o.map(x=>x.trim())};
+const H=sc(R[hi]).map(x=>x.toLowerCase()),di=H.findIndex(h=>/data/.test(h)),vi=H.findIndex(h=>/valor|amount/.test(h)),ni=H.findIndex(h=>/descri|hist|estab|lan[cç]|memo/.test(h));
+if(di<0||vi<0)return[];const o=[];
+R.slice(hi+1).forEach(l=>{const c=sc(l);let d=c[di]||'',m=d.match(/(\d{2})\/(\d{2})\/(\d{4})/);d=m?m[3]+'-'+m[2]+'-'+m[1]:(d.match(/^\d{4}-\d{2}-\d{2}/)||[''])[0];
+let s=(c[vi]||'').replace(/[R$\s]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const a=parseFloat(s);if(!d||isNaN(a)||!a)return;o.push({d,v:Math.abs(a),t:a<0?'s':'e',n:(ni>=0?c[ni]:'')||'Movimentação',id:''})});return o}
+function impFile(){const f=document.getElementById('if').files[0],b=document.getElementById('ib').value;if(!f){window._msg='Escolha um arquivo primeiro.';render();return}
+const r=new FileReader();r.onload=()=>{let t;try{t=new TextDecoder('utf-8',{fatal:true}).decode(r.result)}catch(e){t=new TextDecoder('windows-1252').decode(r.result)}
+const L=/<STMTTRN>/i.test(t)?parseOFX(t):parseCSV(t);let a=0,d=0;const seen=new Set(S.mov.map(m=>m.k).filter(Boolean));
+L.forEach(x=>{const k=[b,x.d,x.v,x.t,x.n,x.id].join('|');if(seen.has(k)){d++;return}seen.add(k);S.mov.push({id:uid(),b,t:x.t,v:x.v,d:x.d,n:x.n,k});a++});
+if(a)S.imp[b]=br(TODAY);save();window._msg=L.length?`${a} movimentações importadas em ${bn(b)}; ${d} repetidas ignoradas.`:'Não encontrei movimentações neste arquivo. Confira se é OFX ou CSV com colunas de data, descrição e valor.';render()};r.readAsArrayBuffer(f)}
 function setInit(id,v){S.init[id]=num(v)||0;save();render()}
 function addMov(e){const f=fd(e),v=num(f.v);if(!(v>0))return false;S.mov.push({id:uid(),b:f.b,t:f.t,v,d:f.d,n:f.n});save();render();return false}
 function delMov(id){const m=S.mov.find(x=>x.id===id);if(m){if(m.inv)delete S.paid[m.inv];if(m.bill){const b=S.bills.find(x=>x.id===m.bill);if(b)b.paid=false}}S.mov=S.mov.filter(x=>x.id!==id);save();render()}
@@ -133,7 +162,7 @@ function addBuy(e){const f=fd(e);S.buys.push({id:uid(),card:f.card,n2:f.n2,v:num
 function delBuy(id){S.buys=S.buys.filter(p=>p.id!==id);save();render()}
 function payInv(key){const i=invs().find(x=>x.key===key);if(!i||i.paid)return;S.mov.push({id:uid(),b:document.getElementById('pb_'+key).value,t:'s',v:i.total,d:TODAY,n:`Fatura ${i.c.n} ${ymBR(i.ym)}`,inv:key});S.paid[key]=1;save();render()}
 
-const TABS=[['r','Visão geral',vR],['m','Movimentações',vM],['c','Contas a pagar',vC],['k','Cartões',vK]];
+const TABS=[['r','Visão geral',vR],['d','Dashboard',vD],['i','Bancos e extratos',vI],['m','Movimentações',vM],['c','Contas a pagar',vC],['k','Cartões',vK]];
 function render(){$n.innerHTML=TABS.map(t=>`<button class="${t[0]===tab?'on':''}" onclick="tab='${t[0]}';render()">${t[1]}</button>`).join('');$a.innerHTML=TABS.find(t=>t[0]===tab)[2]()}
 const $n=document.getElementById('nav'),$a=document.getElementById('app');
 render();
