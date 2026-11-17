@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f5fe0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Finanças">
 <title>Assistente Financeiro Pessoal</title>
 <style>
 :root{--bg:#f3f6fc;--sf:#fff;--tx:#0f1b33;--mu:#5b6b8a;--bd:#dce4f2;--ac:#1f5fe0;--ac2:#e6eefc;--ok:#0f9d6b;--wa:#b36b00;--er:#d13b3b;--okb:#e2f6ee;--wab:#fff3d9;--erb:#fde7e7;
@@ -26,6 +30,7 @@ nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .bn{display:flex;align-items:center;gap:8px;font-weight:600}.bn i{width:10px;height:10px;border-radius:50%}
 label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mu)}
 input,select{font:inherit;padding:8px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);width:100%}
+input[type=date]{color-scheme:light dark;min-height:38px;cursor:pointer}
 form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end}
 .btn{background:var(--ac);color:#fff;border:0;padding:9px 14px;border-radius:9px;cursor:pointer;font:inherit}
 .btn.g{background:var(--ac2);color:var(--ac)}.x{background:none;border:0;color:var(--mu);cursor:pointer;font-size:16px}
@@ -94,12 +99,12 @@ return `<div class="card tot"><div class="sm">Saldo total consolidado (${B.lengt
 <h2>Análise</h2><div class="card">${tip}<div class="sm" style="margin-top:6px">As compras no cartão só viram saída do banco quando a fatura é paga, sem duplicidade.</div></div>`}
 
 function vM(){const f=window._f||'';const L=S.mov.filter(m=>!f||m.b===f).sort((a,b)=>a.d<b.d?1:-1);
-return `<div class="card"><form onsubmit="return addMov(event)"><label>Banco<select name="b">${bopts()}</select></label><label>Tipo<select name="t"><option value="e">Entrada</option><option value="s">Saída</option></select></label><label>Valor (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Data<input name="d" type="date" value="${TODAY}" required></label><label>Descrição<input name="n" required></label><button class="btn">Adicionar</button></form></div>
+return `<div class="card"><form onsubmit="return addMov(event)"><label>Banco<select name="b">${bopts()}</select></label><label>Tipo<select name="t"><option value="e">Entrada</option><option value="s">Saída</option></select></label><label>Valor (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Data<input name="d" type="date" value="${TODAY}" required onclick="try{this.showPicker()}catch(e){}"></label><label>Descrição<input name="n" required></label><button class="btn">Adicionar</button></form></div>
 <h2>Histórico</h2><div class="row"><label style="width:200px">Filtrar banco<select onchange="window._f=this.value;render()"><option value="">Todos</option>${B.map(b=>`<option value="${b[0]}" ${f===b[0]?'selected':''}>${b[1]}</option>`).join('')}</select></label></div>
 <div class="card tw" style="margin-top:10px">${L.length?`<table><tr><th>Data</th><th>Banco</th><th>Descrição</th><th>Valor</th><th></th></tr>${L.map(m=>`<tr><td>${br(m.d)}</td><td>${bn(m.b)}</td><td>${esc(m.n)}</td><td class="${m.t==='e'?'pos':'neg'}">${m.t==='e'?'+':'−'} ${money(m.v)}</td><td><button class="x" onclick="delMov('${m.id}')" title="Excluir">✕</button></td></tr>`).join('')}</table>`:'<div class="empty">Nenhuma movimentação registrada ainda.</div>'}</div>`}
 
 function vC(){const L=[...S.bills].sort((a,b)=>a.d<b.d?-1:1);
-return `<div class="card"><form onsubmit="return addBill(event)"><label>Descrição<input name="n" required></label><label>Valor (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Vencimento<input name="d" type="date" required></label><label>Pagar com<select name="b">${bopts()}</select></label><button class="btn">Adicionar conta</button></form></div>
+return `<div class="card"><form onsubmit="return addBill(event)"><label>Descrição<input name="n" required></label><label>Valor (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Vencimento<input name="d" type="date" required onclick="try{this.showPicker()}catch(e){}"></label><label>Pagar com<select name="b">${bopts()}</select></label><button class="btn">Adicionar conta</button></form></div>
 <h2>Contas a pagar</h2><div class="card tw">${L.length?`<table><tr><th>Vencimento</th><th>Descrição</th><th>Valor</th><th>Banco</th><th>Status</th><th></th></tr>${L.map(b=>{const st=b.paid?'paga':b.d<TODAY?'atrasada':'aberta';return `<tr><td>${br(b.d)}</td><td>${esc(b.n)}</td><td>${money(b.v)}</td><td>${bn(b.b)}</td><td>${chip(st)}</td><td>${b.paid?'':`<button class="btn g" onclick="payBill('${b.id}')">Pagar</button>`} <button class="x" onclick="delBill('${b.id}')" title="Excluir">✕</button></td></tr>`}).join('')}</table>`:'<div class="empty">Nenhuma conta cadastrada.</div>'}</div>
 <div class="sm" style="margin-top:8px">Ao pagar, o valor sai do saldo do banco escolhido e aparece no histórico.</div>`}
 
@@ -116,7 +121,7 @@ return `<div class="card" style="margin-bottom:12px"><div class="row" style="jus
 <h2 style="font-size:14px">Compras</h2>${ps.length?ps.map(p=>{return `<div class="row sm" style="margin-bottom:4px"><span>${br(p.d)} · ${esc(p.n2)} · ${money(p.v)} em ${p.n}x ${p.n>1?`(restam ${leftOf(p,c)})`:''}</span><button class="x" onclick="delBuy('${p.id}')">✕</button></div>`}).join(''):'<div class="empty">Nenhuma compra.</div>'}</div>`}).join('');
 return `<div class="grid"><div class="card"><div class="sm">Total utilizado</div><div class="big">${money(tu)}</div></div><div class="card"><div class="sm">Limite disponível total</div><div class="big pos">${money(tl-tu)}</div></div><div class="card"><div class="sm">Faturas a vencer</div><div class="big">${money(tu)}</div></div></div>
 <h2>Novo cartão</h2><div class="card"><form onsubmit="return addCard(event)"><label>Banco<select name="b">${bopts()}</select></label><label>Identificação<input name="n" placeholder="Ex.: Nubank Platinum" required></label><label>Limite total (R$)<input name="l" type="number" step="0.01" min="0" required></label><label>Dia de fechamento<input name="fe" type="number" min="1" max="31" required></label><label>Dia de vencimento<input name="ve" type="number" min="1" max="31" required></label><button class="btn">Cadastrar</button></form></div>
-${S.cards.length?`<h2>Nova compra no cartão</h2><div class="card"><form onsubmit="return addBuy(event)"><label>Cartão<select name="card">${S.cards.map(c=>`<option value="${c.id}">${esc(c.n)}</option>`).join('')}</select></label><label>Descrição<input name="n2" required></label><label>Valor total (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Data<input name="d" type="date" value="${TODAY}" required></label><label>Parcelas<input name="n" type="number" min="1" max="48" value="1" required></label><button class="btn">Lançar</button></form></div>
+${S.cards.length?`<h2>Nova compra no cartão</h2><div class="card"><form onsubmit="return addBuy(event)"><label>Cartão<select name="card">${S.cards.map(c=>`<option value="${c.id}">${esc(c.n)}</option>`).join('')}</select></label><label>Descrição<input name="n2" required></label><label>Valor total (R$)<input name="v" type="number" step="0.01" min="0.01" required></label><label>Data<input name="d" type="date" value="${TODAY}" required onclick="try{this.showPicker()}catch(e){}"></label><label>Parcelas<input name="n" type="number" min="1" max="48" value="1" required></label><button class="btn">Lançar</button></form></div>
 <div class="sm" style="margin-top:6px">Compras no cartão não entram como despesa do banco; apenas o pagamento da fatura.</div>`:''}
 <h2>Cartões</h2>${blocks||'<div class="empty">Cadastre seu primeiro cartão acima.</div>'}
 <h2>Previsão de parcelas e faturas</h2><div class="card">${ms.length?`<div class="fc">${ms.map(m=>`<div><b style="height:${byM[m]/mx*80}px"></b>${ymBR(m)}<br>${money(byM[m])}</div>`).join('')}</div>`:'<div class="empty">Sem compromissos futuros.</div>'}</div>
